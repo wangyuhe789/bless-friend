@@ -57,6 +57,7 @@ canvas#confetti{position:fixed;inset:0;pointer-events:none}
   </div>
 </div>
 <script>
+// 配置
 const options = {
   title: "愿你每天都有小确幸",
   subtitle: "工作顺心，身体健康，一切都刚刚好",
@@ -68,7 +69,8 @@ const options = {
     "最近辛苦啦，记得照顾好自己！需要我时，随叫随到 :)",
   badge: "今天也要元气满满",
   theme: "#4dabf7",
-  music: "https://cdn.jsdelivr.net/gh/ai-helpers/static-assets@main/music/sweet-moment.mp3",
+  // 国内更稳的音乐源；若把 mp3 放仓库里，可改为 "./music/你的文件.mp3"
+  music: "https://fastly.jsdelivr.net/gh/ai-helpers/static-assets@main/music/sweet-moment.mp3",
   openOnLoad: true
 };
 // DOM
