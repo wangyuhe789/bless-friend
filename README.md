@@ -1,0 +1,2 @@
+# bless-friend
+no
