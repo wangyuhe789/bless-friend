@@ -57,6 +57,7 @@ canvas#confetti{position:fixed;inset:0;pointer-events:none}
   </div>
 </div>
 <script>
+// 配置
 const options = {
   title: "愿你每天都有小确幸",
   subtitle: "工作顺心，身体健康，一切都刚刚好",
@@ -68,7 +69,7 @@ const options = {
     "最近辛苦啦，记得照顾好自己！需要我时，随叫随到 :)",
   badge: "今天也要元气满满",
   theme: "#4dabf7",
-  music: "https://cdn.jsdelivr.net/gh/ai-helpers/static-assets@main/music/sweet-moment.mp3",
+  music: "https://fastly.jsdelivr.net/gh/ai-helpers/static-assets@main/music/sweet-moment.mp3",
   openOnLoad: true
 };
 // DOM
@@ -119,23 +120,33 @@ function launchConfetti(n=180){
   for(let i=0;i<n;i++){
     confettiPieces.push({ x:confettiCanvas.width/2,y:confettiCanvas.height/2,
       vx:(Math.random()-0.5)*8, vy:(Math.random()*-8-4), size:Math.random()*6+4,
-      color:`hsl(${Math.random()*360},90%,60%)`, rot:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.4, life:0, max:Math.random()*90+60 });
+      color:`hsl(${Math.random()*360)},90%,60%)`.replace(",","(").replace(")",""), // keep hsl format
+      rot:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.4, life:0, max:Math.random()*90+60 });
   }
 }
-(function loop(){ ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-  for(let i=confettiPieces.length-1;i>=0;i--){ const p=confettiPieces[i];
+(function loop(){
+  ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  for(let i=confettiPieces.length-1;i>=0;i--){
+    const p=confettiPieces[i];
     p.life++; p.vy+=0.12; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
-    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.color;
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=`hsl(${Math.random()*360},90%,60%)`;
     ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6); ctx.restore();
     if(p.life>p.max || p.y>confettiCanvas.height+20) confettiPieces.splice(i,1);
-  } requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
 })();
 // 弹窗
-function openModal(){ overlay.classList.add("show"); overlay.setAttribute("aria-hidden","false");
+function openModal(){
+  overlay.classList.add("show");
+  overlay.setAttribute("aria-hidden","false");
   typeText(options.message,typeEl); playMusic(); launchConfetti(220);
   let bursts=0; const timer=setInterval(()=>{ if(!overlay.classList.contains("show")||bursts++>4) return clearInterval(timer); launchConfetti(60); },900);
 }
-function closeModal(){ overlay.classList.remove("show"); overlay.setAttribute("aria-hidden","true"); pauseMusic(); typerAbort++; }
+function closeModal(){
+  overlay.classList.remove("show");
+  overlay.setAttribute("aria-hidden","true");
+  pauseMusic(); typerAbort++;
+}
 // 事件
 openBtn.addEventListener("click",()=>{ openModal(); spawnFloat(openBtn); });
 closeBtn.addEventListener("click",closeModal);
