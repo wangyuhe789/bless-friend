@@ -1,0 +1,149 @@
+<!doctype html><html lang="zh-CN"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>给你的祝福</title>
+<style>
+:root{--primary:#4dabf7;--bg:#0f1020;--text:#fff;--glass-border:rgba(255,255,255,.2)}
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,"Noto Sans SC",sans-serif}
+.page{min-height:100%;display:grid;place-items:center;overflow:hidden;background:
+radial-gradient(1200px 600px at 10% 10%, #1d1f3b 0%, transparent 60%),
+radial-gradient(1200px 600px at 90% 90%, #1a1c36 0%, transparent 60%),var(--bg)}
+.title{text-align:center;padding:32px 20px}.title h1{margin:0 0 8px;font-size:28px}.title p{margin:0;opacity:.85}
+.btn{background:linear-gradient(135deg,var(--primary),#91a7ff);color:#fff;border:0;padding:14px 20px;border-radius:14px;font-weight:700;cursor:pointer;box-shadow:0 10px 24px rgba(77,171,247,.3);transition:.12s}
+.btn:active{transform:translateY(1px) scale(.99);filter:brightness(.96)}
+.overlay{position:fixed;inset:0;display:none;place-items:center;padding:18px;background:rgba(0,0,0,.35);backdrop-filter:blur(6px)}
+.overlay.show{display:grid;animation:fadeIn .18s ease-out}@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.card{position:relative;width:min(680px,92vw);background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.06));border:1px solid var(--glass-border);border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.card-header{padding:22px 22px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 18px var(--primary)}
+.badge{margin-left:auto;font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+.card-body{padding:22px;display:grid;gap:10px}.greet-title{font-size:28px;font-weight:800;margin:0}.greet-sub{margin:0;opacity:.9}
+.typewriter{min-height:64px;line-height:1.6;padding:14px;border-radius:12px;background:rgba(0,0,0,.25);border:1px dashed rgba(255,255,255,.18);white-space:pre-wrap}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.25);padding:10px 12px;border-radius:12px;cursor:pointer}
+.close{position:absolute;right:12px;top:10px;background:transparent;border:0;color:var(--text);opacity:.8;cursor:pointer;font-size:18px;padding:8px}
+.close:hover{opacity:1}
+.float{position:absolute;pointer-events:none;font-size:18px;opacity:0;animation:up 3s ease-in forwards;filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}
+@keyframes up{0%{transform:translateY(12px) scale(.9) rotate(-5deg);opacity:0}10%{opacity:1}100%{transform:translateY(-140px) scale(1.2) rotate(10deg);opacity:0}}
+canvas#confetti{position:fixed;inset:0;pointer-events:none}
+.hint{text-align:center;opacity:.8;font-size:13px;padding:10px 16px}
+</style>
+</head><body>
+<canvas id="confetti"></canvas>
+<div class="page">
+  <div class="title">
+    <h1>送你一份小小的祝福</h1>
+    <p>点下面按钮，收下今天的好运吧～</p>
+  </div>
+  <button id="openBtn" class="btn">收下祝福 ✨</button>
+</div>
+<div id="overlay" class="overlay" aria-hidden="true">
+  <div class="card" role="dialog" aria-modal="true">
+    <button class="close" id="closeBtn" aria-label="关闭">✕</button>
+    <div class="card-header">
+      <div class="dot"></div><div class="dot" style="background:#ffd43b"></div><div class="dot" style="background:#69db7c"></div>
+      <span class="badge" id="badge">今天也要元气满满</span>
+    </div>
+    <div class="card-body">
+      <h2 class="greet-title" id="greetTitle">愿你每天都有小确幸</h2>
+      <p class="greet-sub" id="greetSub">工作顺心，身体健康，一切都刚刚好</p>
+      <div id="typewriter" class="typewriter"></div>
+      <div class="controls">
+        <button class="btn" id="replay">再读一遍</button>
+        <button class="ghost" id="toggleMusic">音乐: 开</button>
+        <button class="ghost" id="fireConfetti">来点彩带</button>
+      </div>
+    </div>
+    <div class="hint">提示：手机端可能需要先点一下才能播放音乐</div>
+  </div>
+</div>
+<script>
+const options = {
+  title: "愿你每天都有小确幸",
+  subtitle: "工作顺心，身体健康，一切都刚刚好",
+  message:
+    "嗨～给你一点点小小的祝福：\n" +
+    "• 事情顺利推进，少加班多开心\n" +
+    "• 身体稳稳在线，按时吃饭好好睡\n" +
+    "• 好运常伴，遇到的都是温柔的人和事\n\n" +
+    "最近辛苦啦，记得照顾好自己！需要我时，随叫随到 :)",
+  badge: "今天也要元气满满",
+  theme: "#4dabf7",
+  music: "https://cdn.jsdelivr.net/gh/ai-helpers/static-assets@main/music/sweet-moment.mp3",
+  openOnLoad: true
+};
+// DOM
+const overlay=document.getElementById("overlay");
+const openBtn=document.getElementById("openBtn");
+const closeBtn=document.getElementById("closeBtn");
+const replayBtn=document.getElementById("replay");
+const toggleMusicBtn=document.getElementById("toggleMusic");
+const fireBtn=document.getElementById("fireConfetti");
+const typeEl=document.getElementById("typewriter");
+const titleEl=document.getElementById("greetTitle");
+const subEl=document.getElementById("greetSub");
+const badgeEl=document.getElementById("badge");
+const confettiCanvas=document.getElementById("confetti");
+document.documentElement.style.setProperty("--primary", options.theme);
+titleEl.textContent=options.title; subEl.textContent=options.subtitle; badgeEl.textContent=options.badge;
+// 音乐
+let audio, musicOn=true;
+function ensureAudio(){ if(!audio){ audio=new Audio(options.music); audio.loop=true; audio.preload="auto"; audio.volume=0.7; } return audio; }
+async function playMusic(){ try{ if(musicOn) await ensureAudio().play(); }catch(e){} }
+function pauseMusic(){ if(audio) audio.pause(); }
+// 打字
+let typerAbort=0;
+async function typeText(text, el, speed=24){
+  typerAbort++; const t=typerAbort; el.textContent="";
+  for(let i=0;i<text.length;i++){ if(t!==typerAbort) return;
+    el.textContent+=text[i];
+    await new Promise(r=>setTimeout(r, text[i]==="\n"?200 : speed*(Math.random()*0.4+0.8)));
+  }
+}
+// 飘字
+const emojis=["💖","✨","🎉","🎈","💫","🌟","💝","🧧","🎊","🍀"];
+function spawnFloat(fromEl){
+  const rect=fromEl.getBoundingClientRect();
+  const span=document.createElement("span");
+  span.className="float"; span.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+  span.style.left=(rect.left+rect.width/2+(Math.random()-0.5)*120)+"px";
+  span.style.top=(rect.top+6+Math.random()*24)+"px";
+  span.style.fontSize=(16+Math.random()*12)+"px";
+  span.style.color=`hsl(${Math.floor(Math.random()*360)},80%,70%)`;
+  document.body.appendChild(span); span.addEventListener("animationend",()=>span.remove());
+}
+// 彩带
+const ctx=confettiCanvas.getContext("2d"); let confettiPieces=[];
+function resizeCanvas(){ confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
+addEventListener("resize", resizeCanvas); resizeCanvas();
+function launchConfetti(n=180){
+  for(let i=0;i<n;i++){
+    confettiPieces.push({ x:confettiCanvas.width/2,y:confettiCanvas.height/2,
+      vx:(Math.random()-0.5)*8, vy:(Math.random()*-8-4), size:Math.random()*6+4,
+      color:`hsl(${Math.random()*360},90%,60%)`, rot:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.4, life:0, max:Math.random()*90+60 });
+  }
+}
+(function loop(){ ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  for(let i=confettiPieces.length-1;i>=0;i--){ const p=confettiPieces[i];
+    p.life++; p.vy+=0.12; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.color;
+    ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6); ctx.restore();
+    if(p.life>p.max || p.y>confettiCanvas.height+20) confettiPieces.splice(i,1);
+  } requestAnimationFrame(loop);
+})();
+// 弹窗
+function openModal(){ overlay.classList.add("show"); overlay.setAttribute("aria-hidden","false");
+  typeText(options.message,typeEl); playMusic(); launchConfetti(220);
+  let bursts=0; const timer=setInterval(()=>{ if(!overlay.classList.contains("show")||bursts++>4) return clearInterval(timer); launchConfetti(60); },900);
+}
+function closeModal(){ overlay.classList.remove("show"); overlay.setAttribute("aria-hidden","true"); pauseMusic(); typerAbort++; }
+// 事件
+openBtn.addEventListener("click",()=>{ openModal(); spawnFloat(openBtn); });
+closeBtn.addEventListener("click",closeModal);
+overlay.addEventListener("click",e=>{ if(e.target===overlay) closeModal(); });
+replayBtn.addEventListener("click",()=>{ typeText(options.message,typeEl); spawnFloat(replayBtn); launchConfetti(160); });
+fireBtn.addEventListener("click",()=>{ spawnFloat(fireBtn); launchConfetti(160); });
+toggleMusicBtn.addEventListener("click",()=>{ musicOn=!musicOn; toggleMusicBtn.textContent="音乐: "+(musicOn?"开":"关"); musicOn?playMusic():pauseMusic(); });
+// 自动弹出
+addEventListener("load",()=>setTimeout(openModal,400));
+</script>
+</body></html>
