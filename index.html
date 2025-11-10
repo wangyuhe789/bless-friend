@@ -26,6 +26,18 @@ radial-gradient(1200px 600px at 90% 90%, #1a1c36 0%, transparent 60%),var(--bg)}
 @keyframes up{0%{transform:translateY(12px) scale(.9) rotate(-5deg);opacity:0}10%{opacity:1}100%{transform:translateY(-140px) scale(1.2) rotate(10deg);opacity:0}}
 canvas#confetti{position:fixed;inset:0;pointer-events:none}
 .hint{text-align:center;opacity:.8;font-size:13px;padding:10px 16px}
+
+/* 随机弹窗（温馨提示卡片） */
+.tip{position:fixed;min-width:200px;max-width:280px;padding:10px 12px 12px;border-radius:12px;
+  box-shadow:0 10px 24px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.06));color:#1f2430;
+  transform-origin:top left;animation:tipIn .18s ease-out;user-select:none;cursor:grab}
+.tip.dragging{cursor:grabbing}
+.tip-header{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-weight:700;font-size:13px;color:#2c2f3a}
+.tip-dot{width:8px;height:8px;border-radius:50%}
+.tip-body{font-size:14px;line-height:1.45;color:#1f2430}
+@keyframes tipIn{from{opacity:0;transform:scale(.9) rotate(-4deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes tipOut{to{opacity:0;transform:translateY(-6px) scale(.98)}}
 </style>
 </head><body>
 <canvas id="confetti"></canvas>
@@ -140,13 +152,6 @@ function openModal(){ overlay.classList.add("show"); overlay.setAttribute("aria-
   let bursts=0; const timer=setInterval(()=>{ if(!overlay.classList.contains("show")||bursts++>4) return clearInterval(timer); launchConfetti(60); },900);
 }
 function closeModal(){ overlay.classList.remove("show"); overlay.setAttribute("aria-hidden","true"); pauseMusic(); typerAbort++; }
-// 事件
-openBtn.addEventListener("click",()=>{ openModal(); spawnFloat(openBtn); });
-closeBtn.addEventListener("click",closeModal);
-overlay.addEventListener("click",e=>{ if(e.target===overlay) closeModal(); });
-replayBtn.addEventListener("click",()=>{ typeText(options.message,typeEl); spawnFloat(replayBtn); launchConfetti(160); });
-fireBtn.addEventListener("click",()=>{ spawnFloat(fireBtn); launchConfetti(160); });
-toggleMusicBtn.addEventListener("click",()=>{ musicOn=!musicOn; toggleMusicBtn.textContent="音乐: "+(musicOn?"开":"关"); musicOn?playMusic():pauseMusic(); });
 // 随机惊喜文案
 const surprises = [
   "🎁 今天会有小确幸降临！",
@@ -159,11 +164,63 @@ const surprises = [
 
 // 点击“点我有惊喜”
 surpriseBtn.addEventListener("click", () => {
-  const msg = surprises[Math.floor(Math.random() * surprises.length)];
-  alert(msg);                 // 原生弹窗，简单直达（手机也可）
+  // 创建自定义弹窗
+  spawnTip(surprises[Math.floor(Math.random() * surprises.length)]);
   spawnFloat(surpriseBtn);    // 飘一个表情
   launchConfetti(160);        // 再来点彩带
 });
+
+// 随机弹窗（温馨提示卡片）
+function spawnTip(customText){
+  const tip=document.createElement("div");
+  tip.className="tip";
+  tip.style.background=`linear-gradient(180deg,${["#FFE8CC","#FFD8A8","#FFB871"][Math.floor(Math.random()*3)]})`;
+
+  const header=document.createElement("div");
+  header.className="tip-header";
+  ["#ff5f56","#ffbd2e","#27c93f"].forEach(c=>{
+    const d=document.createElement("span"); d.className="tip-dot"; d.style.background=c; header.appendChild(d);
+  });
+  const title=document.createElement("span");
+  title.textContent="温馨提示";
+  header.appendChild(title);
+
+  const body=document.createElement("div");
+  body.className="tip-body"; body.textContent=customText;
+
+  tip.appendChild(header); tip.appendChild(body);
+  document.body.appendChild(tip);
+
+  const w=tip.offsetWidth, h=tip.offsetHeight;
+  const pad=12;
+  const maxX=Math.max(0, innerWidth - w - pad);
+  const maxY=Math.max(0, innerHeight - h - pad);
+  tip.style.left = (pad + Math.random()*maxX) + "px";
+  tip.style.top  = (pad + Math.random()*maxY) + "px";
+  tip.style.transform += ` rotate(${(Math.random()*8-4).toFixed(1)}deg)`;
+
+  let sx=0, sy=0, ox=0, oy=0, dragging=false;
+  const onDown=e=>{
+    dragging=true; tip.classList.add("dragging");
+    sx=(e.touches?e.touches[0].clientX:e.clientX);
+    sy=(e.touches?e.touches[0].clientY:e.clientY);
+    const rect=tip.getBoundingClientRect(); ox=rect.left; oy=rect.top;
+    e.preventDefault();
+  };
+  const onMove=e=>{
+    if(!dragging) return;
+    const x=(e.touches?e.touches[0].clientX:e.clientX);
+    const y=(e.touches?e.touches[0].clientY:e.clientY);
+    tip.style.left=Math.min(maxX,Math.max(pad, ox + (x-sx)))+"px";
+    tip.style.top =Math.min(maxY,Math.max(pad, oy + (y-sy)))+"px";
+  };
+  const onUp=()=>{ dragging=false; tip.classList.remove("dragging"); };
+  tip.addEventListener("mousedown",onDown); tip.addEventListener("touchstart",onDown,{passive:false});
+  window.addEventListener("mousemove",onMove); window.addEventListener("touchmove",onMove,{passive:false});
+  window.addEventListener("mouseup",onUp); window.addEventListener("touchend",onUp);
+
+  setTimeout(()=>{ tip.style.animation="tipOut .18s forwards"; setTimeout(()=>{ tip.remove(); },180); }, 6000);
+}
 
 // 自动弹出
 addEventListener("load",()=>setTimeout(openModal,400));
