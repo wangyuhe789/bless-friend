@@ -1,14 +1,45 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<!doctype html><html lang="zh-CN"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>给你的祝福</title>
 <style>
-/* 样式部分保持不变 */
+:root{--primary:#4dabf7;--bg:#0f1020;--text:#fff;--glass-border:rgba(255,255,255,.2)}
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,"Noto Sans SC",sans-serif}
+.page{min-height:100%;display:grid;place-items:center;overflow:hidden;background:
+radial-gradient(1200px 600px at 10% 10%, #1d1f3b 0%, transparent 60%),
+radial-gradient(1200px 600px at 90% 90%, #1a1c36 0%, transparent 60%),var(--bg)}
+.title{text-align:center;padding:32px 20px}.title h1{margin:0 0 8px;font-size:28px}.title p{margin:0;opacity:.85}
+.btn{background:linear-gradient(135deg,var(--primary),#91a7ff);color:#fff;border:0;padding:14px 20px;border-radius:14px;font-weight:700;cursor:pointer;box-shadow:0 10px 24px rgba(77,171,247,.3);transition:.12s}
+.btn:active{transform:translateY(1px) scale(.99);filter:brightness(.96)}
+.overlay{position:fixed;inset:0;display:none;place-items:center;padding:18px;background:rgba(0,0,0,.35);backdrop-filter:blur(6px)}
+.overlay.show{display:grid;animation:fadeIn .18s ease-out}@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.card{position:relative;width:min(680px,92vw);background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.06));border:1px solid var(--glass-border);border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.card-header{padding:22px 22px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 18px var(--primary)}
+.badge{margin-left:auto;font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+.card-body{padding:22px;display:grid;gap:10px}.greet-title{font-size:28px;font-weight:800;margin:0}.greet-sub{margin:0;opacity:.9}
+.typewriter{min-height:64px;line-height:1.6;padding:14px;border-radius:12px;background:rgba(0,0,0,.25);border:1px dashed rgba(255,255,255,.18);white-space:pre-wrap}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.25);padding:10px 12px;border-radius:12px;cursor:pointer}
+.close{position:absolute;right:12px;top:10px;background:transparent;border:0;color:var(--text);opacity:.8;cursor:pointer;font-size:18px;padding:8px}
+.close:hover{opacity:1}
+.float{position:absolute;pointer-events:none;font-size:18px;opacity:0;animation:up 3s ease-in forwards;filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}
+@keyframes up{0%{transform:translateY(12px) scale(.9) rotate(-5deg);opacity:0}10%{opacity:1}100%{transform:translateY(-140px) scale(1.2) rotate(10deg);opacity:0}}
+canvas#confetti{position:fixed;inset:0;pointer-events:none}
+.hint{text-align:center;opacity:.8;font-size:13px;padding:10px 16px}
+
+/* 随机弹窗（温馨提示卡片） */
+.tip{position:fixed;min-width:200px;max-width:280px;padding:10px 12px 12px;border-radius:12px;
+  box-shadow:0 10px 24px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.06));color:#1f2430;
+  transform-origin:top left;animation:tipIn .18s ease-out;user-select:none;cursor:grab; z-index:50;}
+.tip.dragging{cursor:grabbing}
+.tip-header{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-weight:700;font-size:13px;color:#2c2f3a}
+.tip-dot{width:8px;height:8px;border-radius:50%}
+.tip-body{font-size:14px;line-height:1.45;color:#1f2430}
+@keyframes tipIn{from{opacity:0;transform:scale(.9) rotate(-4deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes tipOut{to{opacity:0;transform:translateY(-6px) scale(.98)}}
 </style>
-</head>
-<body>
+</head><body>
 <canvas id="confetti"></canvas>
 <div class="page">
   <div class="title">
@@ -55,127 +86,138 @@ const options = {
   openOnLoad: true
 };
 
-// DOM 元素
-const overlay = document.getElementById("overlay");
-const openBtn = document.getElementById("openBtn");
-const closeBtn = document.getElementById("closeBtn");
-const replayBtn = document.getElementById("replay");
-const toggleMusicBtn = document.getElementById("toggleMusic");
-const fireBtn = document.getElementById("fireConfetti");
+// DOM
+const overlay=document.getElementById("overlay");
+const openBtn=document.getElementById("openBtn");
+const closeBtn=document.getElementById("closeBtn");
+const replayBtn=document.getElementById("replay");
+const toggleMusicBtn=document.getElementById("toggleMusic");
+const fireBtn=document.getElementById("fireConfetti");
 const surpriseBtn = document.getElementById("surpriseBtn");
-const typeEl = document.getElementById("typewriter");
-const titleEl = document.getElementById("greetTitle");
-const subEl = document.getElementById("greetSub");
-const badgeEl = document.getElementById("badge");
-const confettiCanvas = document.getElementById("confetti");
-
+const typeEl=document.getElementById("typewriter");
+const titleEl=document.getElementById("greetTitle");
+const subEl=document.getElementById("greetSub");
+const badgeEl=document.getElementById("badge");
+const confettiCanvas=document.getElementById("confetti");
 document.documentElement.style.setProperty("--primary", options.theme);
-titleEl.textContent = options.title;
-subEl.textContent = options.subtitle;
-badgeEl.textContent = options.badge;
+titleEl.textContent=options.title; subEl.textContent=options.subtitle; badgeEl.textContent=options.badge;
 
 // 音乐
-let audio, musicOn = true;
-function ensureAudio() {
-  if (!audio) {
-    audio = new Audio(options.music);
-    audio.loop = true;
-    audio.preload = "auto";
-    audio.volume = 0.7;
-  }
-  return audio;
-}
-async function playMusic() {
-  try {
-    if (musicOn) await ensureAudio().play();
-  } catch (e) { }
-}
-function pauseMusic() { if (audio) audio.pause(); }
+let audio, musicOn=true;
+function ensureAudio(){ if(!audio){ audio=new Audio(options.music); audio.loop=true; audio.preload="auto"; audio.volume=0.7; } return audio; }
+async function playMusic(){ try{ if(musicOn) await ensureAudio().play(); }catch(e){} }
+function pauseMusic(){ if(audio) audio.pause(); }
 
-// 打字效果
-let typerAbort = 0;
-async function typeText(text, el, speed = 24) {
-  typerAbort++;
-  const t = typerAbort;
-  el.textContent = "";
-  for (let i = 0; i < text.length; i++) {
-    if (t !== typerAbort) return;
-    el.textContent += text[i];
-    await new Promise(r => setTimeout(r, text[i] === "\n" ? 200 : speed * (Math.random() * 0.4 + 0.8)));
+// 打字
+let typerAbort=0;
+async function typeText(text, el, speed=24){
+  typerAbort++; const t=typerAbort; el.textContent="";
+  for(let i=0;i<text.length;i++){ if(t!==typerAbort) return;
+    el.textContent+=text[i];
+    await new Promise(r=>setTimeout(r, text[i]==="\n"?200 : speed*(Math.random()*0.4+0.8)));
   }
 }
 
-// 彩带效果
-const ctx = confettiCanvas.getContext("2d");
-let confettiPieces = [];
-function resizeCanvas() { confettiCanvas.width = innerWidth; confettiCanvas.height = innerHeight; }
-addEventListener("resize", resizeCanvas);
-resizeCanvas();
-function launchConfetti(n = 180) {
-  for (let i = 0; i < n; i++) {
-    confettiPieces.push({
-      x: confettiCanvas.width / 2, y: confettiCanvas.height / 2,
-      vx: (Math.random() - 0.5) * 8, vy: (Math.random() * -8 - 4),
-      size: Math.random() * 6 + 4, color: `hsl(${Math.random() * 360},90%,60%)`,
-      rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.4, life: 0, max: Math.random() * 90 + 60
-    });
+// 飘字
+const emojis=["💖","✨","🎉","🎈","💫","🌟","💝","🧧","🎊","🍀"];
+function spawnFloat(fromEl){
+  const rect=fromEl.getBoundingClientRect();
+  const span=document.createElement("span");
+  span.className="float"; span.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+  span.style.left=(rect.left+rect.width/2+(Math.random()-0.5)*120)+"px";
+  span.style.top=(rect.top+6+Math.random()*24)+"px";
+  span.style.fontSize=(16+Math.random()*12)+"px";
+  span.style.color=`hsl(${Math.floor(Math.random()*360)},80%,70%)`;
+  document.body.appendChild(span); span.addEventListener("animationend",()=>span.remove());
+}
+
+// 彩带
+const ctx=confettiCanvas.getContext("2d"); let confettiPieces=[];
+function resizeCanvas(){ confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
+addEventListener("resize", resizeCanvas); resizeCanvas();
+function launchConfetti(n=180){
+  for(let i=0;i<n;i++){
+    confettiPieces.push({ x:confettiCanvas.width/2,y:confettiCanvas.height/2,
+      vx:(Math.random()-0.5)*8, vy:(Math.random()*-8-4), size:Math.random()*6+4,
+      color:`hsl(${Math.random()*360},90%,60%)`, rot:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.4, life:0, max:Math.random()*90+60 });
   }
 }
-(function loop() {
-  ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-  for (let i = confettiPieces.length - 1; i >= 0; i--) {
-    const p = confettiPieces[i];
-    p.life++; p.vy += 0.12; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
-    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.color;
-    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6); ctx.restore();
-    if (p.life > p.max || p.y > confettiCanvas.height + 20) confettiPieces.splice(i, 1);
-  }
-  requestAnimationFrame(loop);
+(function loop(){ ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  for(let i=confettiPieces.length-1;i>=0;i--){ const p=confettiPieces[i];
+    p.life++; p.vy+=0.12; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.color;
+    ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6); ctx.restore();
+    if(p.life>p.max || p.y>confettiCanvas.height+20) confettiPieces.splice(i,1);
+  } requestAnimationFrame(loop);
 })();
 
-// ====== 随机惊喜 ======
+// ====== 随机惊喜（卡片雨） ======
 const surprises = [
-  "🎁 今天会有小确幸降临！", "💡 给自己一个小目标～", "🍀 好运卡已到账，接下来顺顺利利！",
-  "🌟 你比想象中更棒，继续发光～", "🧧 今天会被温柔以待～", "☕ 记得补水休息，能量+1！",
-  "😄 保持微笑，好运会被你吸引！", "📒 把开心的小事记下来～", "🌈 对自己温柔一点", "🔥 干就完了，别想太多～"
+  "🎁 今天会有小确幸降临！","💡 给自己一个小目标～","🍀 好运卡已到账，接下来顺顺利利！",
+  "🌟 你比想象中更棒，继续发光～","🧧 今天会被温柔以待～","☕ 记得补水休息，能量+1！",
+  "😄 保持微笑，好运会被你吸引！","📒 把开心的小事记下来～","🌈 对自己温柔一点","🔥 干就完了，别想太多～"
 ];
 
-// 点击“点我有惊喜”：关闭小窗口并生成彩带与卡片
+// 同屏上限，避免卡顿
+let tipCount = 0, tipMax = 60;
+
+function spawnTip(text){
+  const palettes=[["#FFE8CC","#FFD8A8"],["#D0EBFF","#A5D8FF"],["#E9FAC8","#C3FAE8"],
+                  ["#E5DBFF","#D0BFFF"],["#FFF0F6","#FCC2D7"],["#E7F5FF","#D0EBFF"]];
+  const pal=palettes[Math.floor(Math.random()*palettes.length)];
+  const tip=document.createElement("div");
+  tip.className="tip";
+  tip.style.background=`linear-gradient(180deg,${pal[0]},${pal[1]})`;
+  tip.style.borderColor="rgba(0,0,0,.06)";
+
+  const header=document.createElement("div"); header.className="tip-header";
+  ["#ff5f56","#ffbd2e","#27c93f"].forEach(c=>{const d=document.createElement("span");d.className="tip-dot";d.style.background=c;header.appendChild(d);});
+  const title=document.createElement("span"); title.textContent="温馨提示"; header.appendChild(title);
+
+  const body=document.createElement("div"); body.className="tip-body"; body.textContent=text;
+
+  tip.appendChild(header); tip.appendChild(body); document.body.appendChild(tip);
+
+  const w=tip.offsetWidth,h=tip.offsetHeight,pad=12;
+  const maxX=Math.max(0,innerWidth-w-pad),maxY=Math.max(0,innerHeight-h-pad);
+  tip.style.left=(pad+Math.random()*maxX)+"px";
+  tip.style.top =(pad+Math.random()*maxY)+"px";
+  tip.style.transform+=` rotate(${(Math.random()*8-4).toFixed(1)}deg)`;
+
+  tipCount++; if(tipCount>tipMax){ const first=document.querySelector(".tip"); if(first){first.remove(); tipCount--;}}
+  const life=4800+Math.random()*2200;
+  setTimeout(()=>{ tip.style.animation="tipOut .18s forwards"; setTimeout(()=>{ tip.remove(); tipCount--; },180); }, life);
+}
+
+// 一次生成很多
+function rainTips(count=24, interval=80){
+  for(let i=0;i<count;i++){
+    setTimeout(()=>{
+      const msg=surprises[Math.floor(Math.random()*surprises.length)];
+      spawnTip(msg);
+    }, i*interval);
+  }
+}
+
+// 点击“点我有惊喜”：关窗口 + 多波卡片雨 + 彩带
 surpriseBtn.addEventListener("click", () => {
   closeModal();
-  rainTips(24, 70); // 第一波（约 24 张）
-  setTimeout(() => rainTips(18, 90), 1200);  // 第二波
-  setTimeout(() => rainTips(12, 110), 2400);  // 第三波 —— 总计 > 50
+  rainTips(24, 70);                 // 第一波（约 24 张）
+  setTimeout(()=> rainTips(18, 90), 1200);  // 第二波
+  setTimeout(()=> rainTips(12,110), 2400);  // 第三波 —— 总计 > 50
   launchConfetti(220);
-  setTimeout(() => launchConfetti(120), 900);
-  setTimeout(() => launchConfetti(120), 1800);
+  setTimeout(()=>launchConfetti(120), 900);
+  setTimeout(()=>launchConfetti(120),1800);
 });
 
 // 弹窗开关
-function openModal() {
-  overlay.classList.add("show");
-  overlay.setAttribute("aria-hidden", "false");
-  typeText(options.message, typeEl);
-  playMusic();
-  launchConfetti(220);
-  let bursts = 0;
-  const timer = setInterval(() => {
-    if (!overlay.classList.contains("show") || bursts++ > 4) return clearInterval(timer);
-    launchConfetti(60);
-  }, 900);
+function openModal(){ overlay.classList.add("show"); overlay.setAttribute("aria-hidden","false");
+  typeText(options.message,typeEl); playMusic(); launchConfetti(220);
+  let bursts=0; const timer=setInterval(()=>{ if(!overlay.classList.contains("show")||bursts++>4) return clearInterval(timer); launchConfetti(60); },900);
 }
-function closeModal() {
-  overlay.classList.remove("show");
-  overlay.setAttribute("aria-hidden", "true");
-  pauseMusic();
-  typerAbort++;
-}
+function closeModal(){ overlay.classList.remove("show"); overlay.setAttribute("aria-hidden","true"); pauseMusic(); typerAbort++; }
 
-// 打开弹窗
-openBtn.addEventListener("click", openModal);
-
-// 点击关闭按钮
-closeBtn.addEventListener("click", closeModal);
+// 自动弹出
+addEventListener("load",()=>setTimeout(openModal,400));
 </script>
-</body>
-</html>
+</body></html>
