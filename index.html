@@ -51,6 +51,7 @@ canvas#confetti{position:fixed;inset:0;pointer-events:none}
         <button class="btn" id="replay">再读一遍</button>
         <button class="ghost" id="toggleMusic">音乐: 开</button>
         <button class="ghost" id="fireConfetti">来点彩带</button>
+        <button class="ghost" id="surpriseBtn">点我有惊喜</button>
       </div>
     </div>
     <div class="hint">提示：手机端可能需要先点一下才能播放音乐</div>
@@ -80,6 +81,7 @@ const closeBtn=document.getElementById("closeBtn");
 const replayBtn=document.getElementById("replay");
 const toggleMusicBtn=document.getElementById("toggleMusic");
 const fireBtn=document.getElementById("fireConfetti");
+const surpriseBtn = document.getElementById("surpriseBtn");
 const typeEl=document.getElementById("typewriter");
 const titleEl=document.getElementById("greetTitle");
 const subEl=document.getElementById("greetSub");
@@ -145,6 +147,24 @@ overlay.addEventListener("click",e=>{ if(e.target===overlay) closeModal(); });
 replayBtn.addEventListener("click",()=>{ typeText(options.message,typeEl); spawnFloat(replayBtn); launchConfetti(160); });
 fireBtn.addEventListener("click",()=>{ spawnFloat(fireBtn); launchConfetti(160); });
 toggleMusicBtn.addEventListener("click",()=>{ musicOn=!musicOn; toggleMusicBtn.textContent="音乐: "+(musicOn?"开":"关"); musicOn?playMusic():pauseMusic(); });
+// 随机惊喜文案
+const surprises = [
+  "🎁 今天会有小确幸降临！",
+  "💡 灵感+1：试试给自己一个小目标～",
+  "🍀 好运卡已到账，接下来一切顺顺利利！",
+  "🌟 你比想象中更棒，继续保持发光～",
+  "🧧 意外之喜：收到这条提醒的人会被温柔以待！",
+  "☕ 记得喝水和休息一下，给自己加个能量条～"
+];
+
+// 点击“点我有惊喜”
+surpriseBtn.addEventListener("click", () => {
+  const msg = surprises[Math.floor(Math.random() * surprises.length)];
+  alert(msg);                 // 原生弹窗，简单直达（手机也可）
+  spawnFloat(surpriseBtn);    // 飘一个表情
+  launchConfetti(160);        // 再来点彩带
+});
+
 // 自动弹出
 addEventListener("load",()=>setTimeout(openModal,400));
 </script>
