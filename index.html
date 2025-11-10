@@ -82,10 +82,10 @@ const options = {
     "最近辛苦啦，记得照顾好自己！需要我时，随叫随到 :)",
   badge: "今天也要元气满满",
   theme: "#4dabf7",
-  // 国内更稳的音乐源；若把 mp3 放仓库里，可改为 "./music/你的文件.mp3"
   music:"https://fastly.jsdelivr.net/gh/wangyuhe789/bless-friend@main/M800002q5rys2QxxMK.mp3",
   openOnLoad: true
 };
+
 // DOM
 const overlay=document.getElementById("overlay");
 const openBtn=document.getElementById("openBtn");
@@ -101,11 +101,13 @@ const badgeEl=document.getElementById("badge");
 const confettiCanvas=document.getElementById("confetti");
 document.documentElement.style.setProperty("--primary", options.theme);
 titleEl.textContent=options.title; subEl.textContent=options.subtitle; badgeEl.textContent=options.badge;
+
 // 音乐
 let audio, musicOn=true;
 function ensureAudio(){ if(!audio){ audio=new Audio(options.music); audio.loop=true; audio.preload="auto"; audio.volume=0.7; } return audio; }
 async function playMusic(){ try{ if(musicOn) await ensureAudio().play(); }catch(e){} }
 function pauseMusic(){ if(audio) audio.pause(); }
+
 // 打字
 let typerAbort=0;
 async function typeText(text, el, speed=24){
@@ -115,6 +117,7 @@ async function typeText(text, el, speed=24){
     await new Promise(r=>setTimeout(r, text[i]==="\n"?200 : speed*(Math.random()*0.4+0.8)));
   }
 }
+
 // 飘字
 const emojis=["💖","✨","🎉","🎈","💫","🌟","💝","🧧","🎊","🍀"];
 function spawnFloat(fromEl){
@@ -127,6 +130,7 @@ function spawnFloat(fromEl){
   span.style.color=`hsl(${Math.floor(Math.random()*360)},80%,70%)`;
   document.body.appendChild(span); span.addEventListener("animationend",()=>span.remove());
 }
+
 // 彩带
 const ctx=confettiCanvas.getContext("2d"); let confettiPieces=[];
 function resizeCanvas(){ confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
@@ -146,12 +150,7 @@ function launchConfetti(n=180){
     if(p.life>p.max || p.y>confettiCanvas.height+20) confettiPieces.splice(i,1);
   } requestAnimationFrame(loop);
 })();
-// 弹窗
-function openModal(){ overlay.classList.add("show"); overlay.setAttribute("aria-hidden","false");
-  typeText(options.message,typeEl); playMusic(); launchConfetti(220);
-  let bursts=0; const timer=setInterval(()=>{ if(!overlay.classList.contains("show")||bursts++>4) return clearInterval(timer); launchConfetti(60); },900);
-}
-function closeModal(){ overlay.classList.remove("show"); overlay.setAttribute("aria-hidden","true"); pauseMusic(); typerAbort++; }
+
 // 随机惊喜文案
 const surprises = [
   "🎁 今天会有小确幸降临！",
@@ -164,6 +163,8 @@ const surprises = [
 
 // 点击“点我有惊喜”
 surpriseBtn.addEventListener("click", () => {
+  // 关闭当前弹窗
+  closeModal();
   // 创建自定义弹窗
   spawnTip(surprises[Math.floor(Math.random() * surprises.length)]);
   spawnFloat(surpriseBtn);    // 飘一个表情
@@ -221,6 +222,13 @@ function spawnTip(customText){
 
   setTimeout(()=>{ tip.style.animation="tipOut .18s forwards"; setTimeout(()=>{ tip.remove(); },180); }, 6000);
 }
+
+// 弹窗
+function openModal(){ overlay.classList.add("show"); overlay.setAttribute("aria-hidden","false");
+  typeText(options.message,typeEl); playMusic(); launchConfetti(220);
+  let bursts=0; const timer=setInterval(()=>{ if(!overlay.classList.contains("show")||bursts++>4) return clearInterval(timer); launchConfetti(60); },900);
+}
+function closeModal(){ overlay.classList.remove("show"); overlay.setAttribute("aria-hidden","true"); pauseMusic(); typerAbort++; }
 
 // 自动弹出
 addEventListener("load",()=>setTimeout(openModal,400));
