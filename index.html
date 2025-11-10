@@ -82,142 +82,216 @@ const options = {
     "最近辛苦啦，记得照顾好自己！需要我时，随叫随到 :)",
   badge: "今天也要元气满满",
   theme: "#4dabf7",
-  music:"https://fastly.jsdelivr.net/gh/wangyuhe789/bless-friend@main/M800002q5rys2QxxMK.mp3",
+  music: "https://fastly.jsdelivr.net/gh/wangyuhe789/bless-friend@main/M800002q5rys2QxxMK.mp3",
   openOnLoad: true
 };
 
-// DOM
-const overlay=document.getElementById("overlay");
-const openBtn=document.getElementById("openBtn");
-const closeBtn=document.getElementById("closeBtn");
-const replayBtn=document.getElementById("replay");
-const toggleMusicBtn=document.getElementById("toggleMusic");
-const fireBtn=document.getElementById("fireConfetti");
+// DOM 元素
+const overlay = document.getElementById("overlay");
+const openBtn = document.getElementById("openBtn");
+const closeBtn = document.getElementById("closeBtn");
+const replayBtn = document.getElementById("replay");
+const toggleMusicBtn = document.getElementById("toggleMusic");
+const fireBtn = document.getElementById("fireConfetti");
 const surpriseBtn = document.getElementById("surpriseBtn");
-const typeEl=document.getElementById("typewriter");
-const titleEl=document.getElementById("greetTitle");
-const subEl=document.getElementById("greetSub");
-const badgeEl=document.getElementById("badge");
-const confettiCanvas=document.getElementById("confetti");
+const typeEl = document.getElementById("typewriter");
+const titleEl = document.getElementById("greetTitle");
+const subEl = document.getElementById("greetSub");
+const badgeEl = document.getElementById("badge");
+const confettiCanvas = document.getElementById("confetti");
 document.documentElement.style.setProperty("--primary", options.theme);
-titleEl.textContent=options.title; subEl.textContent=options.subtitle; badgeEl.textContent=options.badge;
+titleEl.textContent = options.title;
+subEl.textContent = options.subtitle;
+badgeEl.textContent = options.badge;
 
-// 音乐
-let audio, musicOn=true;
-function ensureAudio(){ if(!audio){ audio=new Audio(options.music); audio.loop=true; audio.preload="auto"; audio.volume=0.7; } return audio; }
-async function playMusic(){ try{ if(musicOn) await ensureAudio().play(); }catch(e){} }
-function pauseMusic(){ if(audio) audio.pause(); }
+// ===== 音乐系统 =====
+let audio, musicOn = true;
+function ensureAudio() {
+  if (!audio) {
+    audio = new Audio(options.music);
+    audio.loop = true;
+    audio.preload = "auto";
+    audio.volume = 0.7;
+  }
+  return audio;
+}
+async function playMusic() {
+  try {
+    if (musicOn) await ensureAudio().play();
+  } catch (e) {}
+}
+function pauseMusic() {
+  if (audio) audio.pause();
+}
 
-// 打字
-let typerAbort=0;
-async function typeText(text, el, speed=24){
-  typerAbort++; const t=typerAbort; el.textContent="";
-  for(let i=0;i<text.length;i++){ if(t!==typerAbort) return;
-    el.textContent+=text[i];
-    await new Promise(r=>setTimeout(r, text[i]==="\n"?200 : speed*(Math.random()*0.4+0.8)));
+// ===== 打字效果 =====
+let typerAbort = 0;
+async function typeText(text, el, speed = 24) {
+  typerAbort++;
+  const t = typerAbort;
+  el.textContent = "";
+  for (let i = 0; i < text.length; i++) {
+    if (t !== typerAbort) return;
+    el.textContent += text[i];
+    await new Promise(r => setTimeout(r, text[i] === "\n" ? 200 : speed * (Math.random() * 0.4 + 0.8)));
   }
 }
 
-// 飘字
-const emojis=["💖","✨","🎉","🎈","💫","🌟","💝","🧧","🎊","🍀"];
-function spawnFloat(fromEl){
-  const rect=fromEl.getBoundingClientRect();
-  const span=document.createElement("span");
-  span.className="float"; span.textContent=emojis[Math.floor(Math.random()*emojis.length)];
-  span.style.left=(rect.left+rect.width/2+(Math.random()-0.5)*120)+"px";
-  span.style.top=(rect.top+6+Math.random()*24)+"px";
-  span.style.fontSize=(16+Math.random()*12)+"px";
-  span.style.color=`hsl(${Math.floor(Math.random()*360)},80%,70%)`;
-  document.body.appendChild(span); span.addEventListener("animationend",()=>span.remove());
+// ===== 彩带动画 =====
+const ctx = confettiCanvas.getContext("2d");
+let confettiPieces = [];
+function resizeCanvas() {
+  confettiCanvas.width = innerWidth;
+  confettiCanvas.height = innerHeight;
 }
-
-// 彩带
-const ctx=confettiCanvas.getContext("2d"); let confettiPieces=[];
-function resizeCanvas(){ confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
-addEventListener("resize", resizeCanvas); resizeCanvas();
-function launchConfetti(n=180){
-  for(let i=0;i<n;i++){
-    confettiPieces.push({ x:confettiCanvas.width/2,y:confettiCanvas.height/2,
-      vx:(Math.random()-0.5)*8, vy:(Math.random()*-8-4), size:Math.random()*6+4,
-      color:`hsl(${Math.random()*360},90%,60%)`, rot:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.4, life:0, max:Math.random()*90+60 });
+addEventListener("resize", resizeCanvas);
+resizeCanvas();
+function launchConfetti(n = 180) {
+  for (let i = 0; i < n; i++) {
+    confettiPieces.push({
+      x: confettiCanvas.width / 2,
+      y: confettiCanvas.height / 2,
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() * -8 - 4),
+      size: Math.random() * 6 + 4,
+      color: `hsl(${Math.random() * 360},90%,60%)`,
+      rot: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.4,
+      life: 0,
+      max: Math.random() * 90 + 60
+    });
   }
 }
-(function loop(){ ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-  for(let i=confettiPieces.length-1;i>=0;i--){ const p=confettiPieces[i];
-    p.life++; p.vy+=0.12; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
-    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.color;
-    ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6); ctx.restore();
-    if(p.life>p.max || p.y>confettiCanvas.height+20) confettiPieces.splice(i,1);
-  } requestAnimationFrame(loop);
+(function loop() {
+  ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  for (let i = confettiPieces.length - 1; i >= 0; i--) {
+    const p = confettiPieces[i];
+    p.life++;
+    p.vy += 0.12;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.rot += p.vr;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+    ctx.restore();
+    if (p.life > p.max || p.y > confettiCanvas.height + 20) confettiPieces.splice(i, 1);
+  }
+  requestAnimationFrame(loop);
 })();
 
-// ====== 随机惊喜（卡片雨） ======
-const surprises = [
-  "🎁 今天会有小确幸降临！","💡 给自己一个小目标～","🍀 好运卡已到账，接下来顺顺利利！",
-  "🌟 你比想象中更棒，继续发光～","🧧 今天会被温柔以待～","☕ 记得补水休息，能量+1！",
-  "😄 保持微笑，好运会被你吸引！","📒 把开心的小事记下来～","🌈 对自己温柔一点","🔥 干就完了，别想太多～"
-];
-
-// 同屏上限，避免卡顿
-let tipCount = 0, tipMax = 60;
-
-function spawnTip(text){
-  const palettes=[["#FFE8CC","#FFD8A8"],["#D0EBFF","#A5D8FF"],["#E9FAC8","#C3FAE8"],
-                  ["#E5DBFF","#D0BFFF"],["#FFF0F6","#FCC2D7"],["#E7F5FF","#D0EBFF"]];
-  const pal=palettes[Math.floor(Math.random()*palettes.length)];
-  const tip=document.createElement("div");
-  tip.className="tip";
-  tip.style.background=`linear-gradient(180deg,${pal[0]},${pal[1]})`;
-  tip.style.borderColor="rgba(0,0,0,.06)";
-
-  const header=document.createElement("div"); header.className="tip-header";
-  ["#ff5f56","#ffbd2e","#27c93f"].forEach(c=>{const d=document.createElement("span");d.className="tip-dot";d.style.background=c;header.appendChild(d);});
-  const title=document.createElement("span"); title.textContent="温馨提示"; header.appendChild(title);
-
-  const body=document.createElement("div"); body.className="tip-body"; body.textContent=text;
-
-  tip.appendChild(header); tip.appendChild(body); document.body.appendChild(tip);
-
-  const w=tip.offsetWidth,h=tip.offsetHeight,pad=12;
-  const maxX=Math.max(0,innerWidth-w-pad),maxY=Math.max(0,innerHeight-h-pad);
-  tip.style.left=(pad+Math.random()*maxX)+"px";
-  tip.style.top =(pad+Math.random()*maxY)+"px";
-  tip.style.transform+=` rotate(${(Math.random()*8-4).toFixed(1)}deg)`;
-
-  tipCount++; if(tipCount>tipMax){ const first=document.querySelector(".tip"); if(first){first.remove(); tipCount--;}}
-  const life=4800+Math.random()*2200;
-  setTimeout(()=>{ tip.style.animation="tipOut .18s forwards"; setTimeout(()=>{ tip.remove(); tipCount--; },180); }, life);
+// ===== 弹窗控制 =====
+function openModal() {
+  overlay.classList.add("show");
+  overlay.setAttribute("aria-hidden", "false");
+  typeText(options.message, typeEl);
+  playMusic();
+  launchConfetti(200);
+}
+function closeModal() {
+  overlay.classList.remove("show");
+  overlay.setAttribute("aria-hidden", "true");
+  pauseMusic();
+  typerAbort++;
 }
 
-// 一次生成很多
-function rainTips(count=24, interval=80){
-  for(let i=0;i<count;i++){
-    setTimeout(()=>{
-      const msg=surprises[Math.floor(Math.random()*surprises.length)];
+// ===== 事件绑定 =====
+
+// 打开窗口
+openBtn.addEventListener("click", openModal);
+
+// 关闭窗口
+closeBtn.addEventListener("click", closeModal);
+
+// 再读一遍
+replayBtn.addEventListener("click", () => {
+  typeText(options.message, typeEl);
+});
+
+// 音乐开关
+toggleMusicBtn.addEventListener("click", () => {
+  musicOn = !musicOn;
+  toggleMusicBtn.textContent = `音乐: ${musicOn ? "开" : "关"}`;
+  if (musicOn) playMusic();
+  else pauseMusic();
+});
+
+// 来点彩带
+fireBtn.addEventListener("click", () => {
+  launchConfetti(300);
+});
+
+// 惊喜按钮（保持原逻辑）
+const surprises = [
+  "🎁 今天会有小确幸降临！", "💡 给自己一个小目标～", "🍀 好运卡已到账，接下来顺顺利利！",
+  "🌟 你比想象中更棒，继续发光～", "🧧 今天会被温柔以待～", "☕ 记得补水休息，能量+1！",
+  "😄 保持微笑，好运会被你吸引！", "📒 把开心的小事记下来～", "🌈 对自己温柔一点", "🔥 干就完了，别想太多～"
+];
+
+let tipCount = 0, tipMax = 60;
+function spawnTip(text) {
+  const palettes = [
+    ["#FFE8CC", "#FFD8A8"],
+    ["#D0EBFF", "#A5D8FF"],
+    ["#E9FAC8", "#C3FAE8"],
+    ["#E5DBFF", "#D0BFFF"],
+    ["#FFF0F6", "#FCC2D7"],
+    ["#E7F5FF", "#D0EBFF"]
+  ];
+  const pal = palettes[Math.floor(Math.random() * palettes.length)];
+  const tip = document.createElement("div");
+  tip.className = "tip";
+  tip.style.background = `linear-gradient(180deg,${pal[0]},${pal[1]})`;
+  const header = document.createElement("div");
+  header.className = "tip-header";
+  ["#ff5f56", "#ffbd2e", "#27c93f"].forEach(c => {
+    const d = document.createElement("span");
+    d.className = "tip-dot";
+    d.style.background = c;
+    header.appendChild(d);
+  });
+  const title = document.createElement("span");
+  title.textContent = "温馨提示";
+  header.appendChild(title);
+  const body = document.createElement("div");
+  body.className = "tip-body";
+  body.textContent = text;
+  tip.appendChild(header);
+  tip.appendChild(body);
+  document.body.appendChild(tip);
+  const w = tip.offsetWidth, h = tip.offsetHeight, pad = 12;
+  tip.style.left = pad + Math.random() * (innerWidth - w - pad) + "px";
+  tip.style.top = pad + Math.random() * (innerHeight - h - pad) + "px";
+  tipCount++;
+  setTimeout(() => {
+    tip.remove();
+    tipCount--;
+  }, 5000);
+}
+function rainTips(count = 24, interval = 80) {
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const msg = surprises[Math.floor(Math.random() * surprises.length)];
       spawnTip(msg);
-    }, i*interval);
+    }, i * interval);
   }
 }
 
-// 点击“点我有惊喜”：关窗口 + 多波卡片雨 + 彩带
+// 点击“点我有惊喜”
 surpriseBtn.addEventListener("click", () => {
   closeModal();
-  rainTips(24, 70);                 // 第一波（约 24 张）
-  setTimeout(()=> rainTips(18, 90), 1200);  // 第二波
-  setTimeout(()=> rainTips(12,110), 2400);  // 第三波 —— 总计 > 50
+  rainTips(24, 70);
+  setTimeout(() => rainTips(18, 90), 1200);
+  setTimeout(() => rainTips(12, 110), 2400);
   launchConfetti(220);
-  setTimeout(()=>launchConfetti(120), 900);
-  setTimeout(()=>launchConfetti(120),1800);
+  setTimeout(() => launchConfetti(120), 900);
+  setTimeout(() => launchConfetti(120), 1800);
+  setTimeout(() => openBtn.disabled = false, 1000);
 });
 
-// 弹窗开关
-function openModal(){ overlay.classList.add("show"); overlay.setAttribute("aria-hidden","false");
-  typeText(options.message,typeEl); playMusic(); launchConfetti(220);
-  let bursts=0; const timer=setInterval(()=>{ if(!overlay.classList.contains("show")||bursts++>4) return clearInterval(timer); launchConfetti(60); },900);
-}
-function closeModal(){ overlay.classList.remove("show"); overlay.setAttribute("aria-hidden","true"); pauseMusic(); typerAbort++; }
-
-// 自动弹出
-addEventListener("load",()=>setTimeout(openModal,400));
+// 页面加载后自动打开（可选）
+addEventListener("load", () => setTimeout(openModal, 400));
 </script>
-</body></html>
+
